@@ -1,0 +1,45 @@
+{
+  "schema": "fp-testplan/0.1",
+  "name": "demo firmware acceptance",
+  "description": "Blink 10 Hz, telemetry UART, temp sensor I2C poll, button echo < 100 us, idle current < 15 mA.",
+  "target": {"board": "NUCLEO-F411RE", "mcu": "STM32F411RETx"},
+  "images": {"app": {"file": "sim_fw/demo.json", "format": "sim"}},
+  "power": {"vdd": 3.3, "source": "usb"},
+  "signals": {
+    "LED": "PA5",
+    "TX": "PA2",
+    "SCL": "PB8",
+    "SDA": "PB9",
+    "BTN": "PC13",
+    "ECHO": "PA6",
+    "STATUS": "PB0"
+  },
+  "timeout_s": 60,
+  "steps": [
+    {"type": "flash", "id": "flash"},
+    {"type": "console", "id": "boot banner", "pattern": "app ready", "within_ms": 1000},
+    {"type": "memory", "id": "config version", "symbol": "g_config_version", "expect": {"value": 3}},
+    {"type": "memory", "id": "systick runs", "symbol": "g_ticks", "changes": true, "interval_ms": 50},
+    {"type": "current", "id": "run current", "rail": "idd", "duration_ms": 300, "avg_ma": {"max": 15}},
+    {
+      "type": "capture", "id": "outputs", "signals": ["LED", "TX", "SCL", "SDA", "STATUS"], "duration_ms": 300,
+      "checks": [
+        {"kind": "frequency", "signal": "LED", "expect": {"value": 10, "tol_pct": 2}},
+        {"kind": "duty", "signal": "LED", "expect": {"value": 50, "tol": 2}},
+        {"kind": "level", "signal": "STATUS", "expect": "high"},
+        {"kind": "uart", "signal": "TX", "baud": 115200, "pattern": "T=\\d+\\.\\dC"},
+        {"kind": "i2c", "scl": "SCL", "sda": "SDA",
+         "expect": [{"addr": 72, "rw": "write", "data": "00"}, {"addr": 72, "rw": "read", "data": "17 80"}]}
+      ]
+    },
+    {
+      "type": "capture", "id": "button echo", "signals": ["BTN", "ECHO"], "duration_ms": 120,
+      "during": [{"type": "drive", "signal": "BTN", "level": "low", "at_ms": 30, "pulse_ms": 50}],
+      "checks": [
+        {"kind": "latency", "start": {"signal": "BTN", "edge": "falling"}, "end": {"signal": "ECHO", "edge": "rising"},
+         "expect": {"max": 100}},
+        {"kind": "pulse_width", "signal": "ECHO", "polarity": "high", "expect": {"value": 50000, "tol_pct": 5}}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "boot_ms": 5,
+  "console": ["NUCLEO-F411RE demo v1.0", "clock 100 MHz", "app ready"],
+  "console_period": {"text": "tick\r\n", "period_ms": 200},
+  "blink": [{"pin": "PA5", "hz": 10, "duty": 50}],
+  "static": {"PB0": "high"},
+  "uart": [{"pin": "PA2", "baud": 115200, "period_ms": 20, "text": "T=23.5C\n"}],
+  "i2c": [{"scl": "PB8", "sda": "PB9", "clk_hz": 100000, "period_ms": 10,
+           "txns": [[72, "write", "00"], [72, "read", "1780"]]}],
+  "button": [{"in": "PC13", "out": "PA6", "active_low": true, "latency_us": 40}],
+  "symbols": {
+    "g_ticks": {"address": 536870912, "rate_hz": 1000},
+    "g_config_version": {"address": 536870916, "value": 3}
+  },
+  "current_ma": {"idd": 8.2, "vbus": 45}
+}

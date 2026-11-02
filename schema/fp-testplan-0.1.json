@@ -1,0 +1,1880 @@
+{
+  "$defs": {
+    "CaptureStep": {
+      "additionalProperties": false,
+      "description": "T4-T7: record signals with the logic analyzer, run `during` actions, then evaluate `checks`.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "capture",
+          "title": "Type",
+          "type": "string"
+        },
+        "signals": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Signals",
+          "type": "array"
+        },
+        "duration_ms": {
+          "exclusiveMinimum": 0,
+          "maximum": 10000,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "samplerate_hz": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 100000000,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Default: chosen by the station",
+          "title": "Samplerate Hz"
+        },
+        "during": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "drive": "#/$defs/DriveStep",
+                "pattern": "#/$defs/PatternStep",
+                "power": "#/$defs/PowerStep",
+                "reset": "#/$defs/ResetStep",
+                "wait": "#/$defs/WaitStep"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ResetStep"
+              },
+              {
+                "$ref": "#/$defs/PowerStep"
+              },
+              {
+                "$ref": "#/$defs/WaitStep"
+              },
+              {
+                "$ref": "#/$defs/DriveStep"
+              },
+              {
+                "$ref": "#/$defs/PatternStep"
+              }
+            ]
+          },
+          "title": "During",
+          "type": "array"
+        },
+        "checks": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "duty": "#/$defs/DutyCheck",
+                "edge_count": "#/$defs/EdgeCountCheck",
+                "frequency": "#/$defs/FrequencyCheck",
+                "i2c": "#/$defs/I2cCheck",
+                "latency": "#/$defs/LatencyCheck",
+                "level": "#/$defs/LevelCheck",
+                "pulse_width": "#/$defs/PulseWidthCheck",
+                "spi": "#/$defs/SpiCheck",
+                "uart": "#/$defs/UartCheck"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/FrequencyCheck"
+              },
+              {
+                "$ref": "#/$defs/DutyCheck"
+              },
+              {
+                "$ref": "#/$defs/PulseWidthCheck"
+              },
+              {
+                "$ref": "#/$defs/EdgeCountCheck"
+              },
+              {
+                "$ref": "#/$defs/LevelCheck"
+              },
+              {
+                "$ref": "#/$defs/LatencyCheck"
+              },
+              {
+                "$ref": "#/$defs/UartCheck"
+              },
+              {
+                "$ref": "#/$defs/SpiCheck"
+              },
+              {
+                "$ref": "#/$defs/I2cCheck"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Checks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "signals",
+        "duration_ms",
+        "checks"
+      ],
+      "title": "CaptureStep",
+      "type": "object"
+    },
+    "ConsoleStep": {
+      "additionalProperties": false,
+      "description": "T2: wait for a regex on the console (UART via USB-serial/probe VCOM, or RTT).",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "console",
+          "title": "Type",
+          "type": "string"
+        },
+        "source": {
+          "default": "uart",
+          "enum": [
+            "uart",
+            "rtt"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "baud": {
+          "default": 115200,
+          "exclusiveMinimum": 0,
+          "title": "Baud",
+          "type": "integer"
+        },
+        "pattern": {
+          "description": "Python regex searched in the received text",
+          "title": "Pattern",
+          "type": "string"
+        },
+        "within_ms": {
+          "default": 2000,
+          "exclusiveMinimum": 0,
+          "maximum": 600000,
+          "title": "Within Ms",
+          "type": "number"
+        },
+        "absent": {
+          "default": false,
+          "description": "Pass if the pattern does NOT appear within the time",
+          "title": "Absent",
+          "type": "boolean"
+        },
+        "from_reset": {
+          "default": true,
+          "description": "Reset the DUT after opening the port so boot output is caught",
+          "title": "From Reset",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "pattern"
+      ],
+      "title": "ConsoleStep",
+      "type": "object"
+    },
+    "CurrentStep": {
+      "additionalProperties": false,
+      "description": "T12: DUT supply current measured on the pod (idd = MCU shunt, vbus = whole board).",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "current",
+          "title": "Type",
+          "type": "string"
+        },
+        "rail": {
+          "default": "idd",
+          "enum": [
+            "idd",
+            "vbus"
+          ],
+          "title": "Rail",
+          "type": "string"
+        },
+        "duration_ms": {
+          "default": 1000,
+          "exclusiveMinimum": 0,
+          "maximum": 60000,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "avg_ma": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Range"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "peak_ma": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Range"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "CurrentStep",
+      "type": "object"
+    },
+    "DriveStep": {
+      "additionalProperties": false,
+      "description": "Drive a DUT input from the rig stimulus bus (needs the rig).  Contention-checked before full drive.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "drive",
+          "title": "Type",
+          "type": "string"
+        },
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "level": {
+          "enum": [
+            "high",
+            "low",
+            "release"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "pulse_ms": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 60000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Return to the previous state after this time",
+          "title": "Pulse Ms"
+        },
+        "at_ms": {
+          "default": 0,
+          "description": "Inside capture.during: offset from capture start",
+          "minimum": 0,
+          "title": "At Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "signal",
+        "level"
+      ],
+      "title": "DriveStep",
+      "type": "object"
+    },
+    "DutyCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "duty",
+          "title": "Kind",
+          "type": "string"
+        },
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "expect": {
+          "$ref": "#/$defs/Range",
+          "description": "Percent high"
+        }
+      },
+      "required": [
+        "kind",
+        "signal",
+        "expect"
+      ],
+      "title": "DutyCheck",
+      "type": "object"
+    },
+    "EdgeCountCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "edge_count",
+          "title": "Kind",
+          "type": "string"
+        },
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "edge": {
+          "default": "rising",
+          "enum": [
+            "rising",
+            "falling",
+            "any"
+          ],
+          "title": "Edge",
+          "type": "string"
+        },
+        "expect": {
+          "$ref": "#/$defs/Range"
+        }
+      },
+      "required": [
+        "kind",
+        "signal",
+        "expect"
+      ],
+      "title": "EdgeCountCheck",
+      "type": "object"
+    },
+    "EdgeRef": {
+      "additionalProperties": false,
+      "properties": {
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "edge": {
+          "default": "any",
+          "enum": [
+            "rising",
+            "falling",
+            "any"
+          ],
+          "title": "Edge",
+          "type": "string"
+        }
+      },
+      "required": [
+        "signal"
+      ],
+      "title": "EdgeRef",
+      "type": "object"
+    },
+    "EmulateStep": {
+      "additionalProperties": false,
+      "description": "T8: emulate a peripheral for the DUT while `steps` run, then check what the emulator saw.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "emulate",
+          "title": "Type",
+          "type": "string"
+        },
+        "device": {
+          "discriminator": {
+            "mapping": {
+              "i2c_target": "#/$defs/I2cTargetDevice",
+              "uart_peer": "#/$defs/UartPeerDevice"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/I2cTargetDevice"
+            },
+            {
+              "$ref": "#/$defs/UartPeerDevice"
+            }
+          ],
+          "title": "Device"
+        },
+        "steps": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "capture": "#/$defs/CaptureStep",
+                "console": "#/$defs/ConsoleStep",
+                "current": "#/$defs/CurrentStep",
+                "memory": "#/$defs/MemoryStep",
+                "reset": "#/$defs/ResetStep",
+                "wait": "#/$defs/WaitStep"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ResetStep"
+              },
+              {
+                "$ref": "#/$defs/WaitStep"
+              },
+              {
+                "$ref": "#/$defs/ConsoleStep"
+              },
+              {
+                "$ref": "#/$defs/MemoryStep"
+              },
+              {
+                "$ref": "#/$defs/CurrentStep"
+              },
+              {
+                "$ref": "#/$defs/CaptureStep"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        },
+        "expect_i2c": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/I2cTransaction"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "i2c_target: transactions, in order",
+          "title": "Expect I2C"
+        },
+        "expect_received_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "uart_peer: text the DUT must have sent",
+          "title": "Expect Received Text"
+        },
+        "expect_received_hex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expect Received Hex"
+        }
+      },
+      "required": [
+        "type",
+        "device",
+        "steps"
+      ],
+      "title": "EmulateStep",
+      "type": "object"
+    },
+    "FlashStep": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "flash",
+          "title": "Type",
+          "type": "string"
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Image key in plan.images; default = the plan's first image",
+          "title": "Image"
+        },
+        "verify": {
+          "default": true,
+          "title": "Verify",
+          "type": "boolean"
+        },
+        "run": {
+          "default": true,
+          "description": "Reset and run after flashing",
+          "title": "Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "FlashStep",
+      "type": "object"
+    },
+    "FrequencyCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "frequency",
+          "title": "Kind",
+          "type": "string"
+        },
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "expect": {
+          "$ref": "#/$defs/Range",
+          "description": "Hz"
+        }
+      },
+      "required": [
+        "kind",
+        "signal",
+        "expect"
+      ],
+      "title": "FrequencyCheck",
+      "type": "object"
+    },
+    "I2cCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "i2c",
+          "title": "Kind",
+          "type": "string"
+        },
+        "scl": {
+          "title": "Scl",
+          "type": "string"
+        },
+        "sda": {
+          "title": "Sda",
+          "type": "string"
+        },
+        "expect": {
+          "description": "Transactions that must appear in order",
+          "items": {
+            "$ref": "#/$defs/I2cTransaction"
+          },
+          "minItems": 1,
+          "title": "Expect",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "scl",
+        "sda",
+        "expect"
+      ],
+      "title": "I2cCheck",
+      "type": "object"
+    },
+    "I2cTargetDevice": {
+      "additionalProperties": false,
+      "description": "The rig answers as an I2C target (register-file device, e.g. a sensor) at `addr`.\n\nProtocol: a write's first byte sets the register pointer, further bytes are stored; reads return\nregisters from the pointer on (auto-increment).  The rig provides 2.2 k pull-ups on SCL/SDA.",
+      "properties": {
+        "kind": {
+          "const": "i2c_target",
+          "title": "Kind",
+          "type": "string"
+        },
+        "scl": {
+          "title": "Scl",
+          "type": "string"
+        },
+        "sda": {
+          "title": "Sda",
+          "type": "string"
+        },
+        "addr": {
+          "maximum": 119,
+          "minimum": 8,
+          "title": "Addr",
+          "type": "integer"
+        },
+        "registers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Initial register contents: {\"0x00\": \"17 80\", ...} (hex)",
+          "title": "Registers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "kind",
+        "scl",
+        "sda",
+        "addr"
+      ],
+      "title": "I2cTargetDevice",
+      "type": "object"
+    },
+    "I2cTransaction": {
+      "additionalProperties": false,
+      "properties": {
+        "addr": {
+          "maximum": 127,
+          "minimum": 0,
+          "title": "Addr",
+          "type": "integer"
+        },
+        "rw": {
+          "enum": [
+            "write",
+            "read"
+          ],
+          "title": "Rw",
+          "type": "string"
+        },
+        "data": {
+          "default": "",
+          "description": "Hex bytes; read data is checked too",
+          "title": "Data",
+          "type": "string"
+        },
+        "ack": {
+          "default": true,
+          "description": "Expect the address to be ACKed",
+          "title": "Ack",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "addr",
+        "rw"
+      ],
+      "title": "I2cTransaction",
+      "type": "object"
+    },
+    "Image": {
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path inside the job package",
+          "title": "File"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Download URL (https or s3)",
+          "title": "Url"
+        },
+        "format": {
+          "default": "elf",
+          "enum": [
+            "elf",
+            "hex",
+            "bin",
+            "uf2",
+            "sim"
+          ],
+          "title": "Format",
+          "type": "string"
+        },
+        "load_address": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required for bin",
+          "title": "Load Address"
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        }
+      },
+      "title": "Image",
+      "type": "object"
+    },
+    "LatencyCheck": {
+      "additionalProperties": false,
+      "description": "T7: time from the first `start` edge to the first `end` edge after it.",
+      "properties": {
+        "kind": {
+          "const": "latency",
+          "title": "Kind",
+          "type": "string"
+        },
+        "start": {
+          "$ref": "#/$defs/EdgeRef"
+        },
+        "end": {
+          "$ref": "#/$defs/EdgeRef"
+        },
+        "expect": {
+          "$ref": "#/$defs/Range",
+          "description": "Microseconds"
+        }
+      },
+      "required": [
+        "kind",
+        "start",
+        "end",
+        "expect"
+      ],
+      "title": "LatencyCheck",
+      "type": "object"
+    },
+    "LevelCheck": {
+      "additionalProperties": false,
+      "description": "T4: signal level at a point in the capture (default: whole capture must hold the level).",
+      "properties": {
+        "kind": {
+          "const": "level",
+          "title": "Kind",
+          "type": "string"
+        },
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "expect": {
+          "enum": [
+            "high",
+            "low"
+          ],
+          "title": "Expect",
+          "type": "string"
+        },
+        "at_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sample time; omit = level must hold throughout",
+          "title": "At Ms"
+        }
+      },
+      "required": [
+        "kind",
+        "signal",
+        "expect"
+      ],
+      "title": "LevelCheck",
+      "type": "object"
+    },
+    "MemoryStep": {
+      "additionalProperties": false,
+      "description": "T3: read a variable (ELF symbol) or address through the debug probe.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "memory",
+          "title": "Type",
+          "type": "string"
+        },
+        "symbol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Symbol"
+        },
+        "address": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address"
+        },
+        "ctype": {
+          "default": "u32",
+          "enum": [
+            "u8",
+            "i8",
+            "u16",
+            "i16",
+            "u32",
+            "i32",
+            "f32"
+          ],
+          "title": "Ctype",
+          "type": "string"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Range"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "changes": {
+          "default": false,
+          "description": "Pass if the value changes between two reads `interval_ms` apart",
+          "title": "Changes",
+          "type": "boolean"
+        },
+        "interval_ms": {
+          "default": 100,
+          "exclusiveMinimum": 0,
+          "title": "Interval Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "MemoryStep",
+      "type": "object"
+    },
+    "PatternStep": {
+      "additionalProperties": false,
+      "description": "T7: play a waveform into a DUT input (inside capture.during).  Timing resolution ~7 ns.\n\nEither `edges` = [[level, duration_us], ...] played `repeat` times, or `square` (repeat = number of\nperiods).  repeat 0 = keep going until the capture ends.  After a finite pattern the pin holds the last level.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "pattern",
+          "title": "Type",
+          "type": "string"
+        },
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "edges": {
+          "anyOf": [
+            {
+              "items": {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "enum": [
+                      0,
+                      1
+                    ],
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              "maxItems": 256,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Edges"
+        },
+        "square": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Square"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "repeat": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Repeat",
+          "type": "integer"
+        },
+        "init": {
+          "default": "low",
+          "description": "Level driven from the start of the step until the pattern starts",
+          "enum": [
+            "high",
+            "low"
+          ],
+          "title": "Init",
+          "type": "string"
+        },
+        "at_ms": {
+          "default": 0,
+          "description": "Offset from capture start",
+          "minimum": 0,
+          "title": "At Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "signal"
+      ],
+      "title": "PatternStep",
+      "type": "object"
+    },
+    "Power": {
+      "additionalProperties": false,
+      "properties": {
+        "vdd": {
+          "default": 3.3,
+          "description": "Expected DUT I/O voltage; rig VIO is set to match",
+          "exclusiveMinimum": 0,
+          "maximum": 5.5,
+          "title": "Vdd",
+          "type": "number"
+        },
+        "source": {
+          "default": "usb",
+          "enum": [
+            "usb",
+            "rig"
+          ],
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "title": "Power",
+      "type": "object"
+    },
+    "PowerStep": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "power",
+          "title": "Type",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "on",
+            "off",
+            "cycle"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "off_ms": {
+          "default": 200,
+          "description": "Off time for cycle",
+          "maximum": 60000,
+          "minimum": 0,
+          "title": "Off Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "state"
+      ],
+      "title": "PowerStep",
+      "type": "object"
+    },
+    "PulseWidthCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "pulse_width",
+          "title": "Kind",
+          "type": "string"
+        },
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "polarity": {
+          "default": "high",
+          "enum": [
+            "high",
+            "low"
+          ],
+          "title": "Polarity",
+          "type": "string"
+        },
+        "stat": {
+          "default": "mean",
+          "enum": [
+            "min",
+            "max",
+            "mean"
+          ],
+          "title": "Stat",
+          "type": "string"
+        },
+        "expect": {
+          "$ref": "#/$defs/Range",
+          "description": "Microseconds"
+        }
+      },
+      "required": [
+        "kind",
+        "signal",
+        "expect"
+      ],
+      "title": "PulseWidthCheck",
+      "type": "object"
+    },
+    "Range": {
+      "additionalProperties": false,
+      "description": "Numeric expectation.  Use min/max, or value with tol (absolute) or tol_pct (percent of value).",
+      "properties": {
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "tol": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tol"
+        },
+        "tol_pct": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tol Pct"
+        }
+      },
+      "title": "Range",
+      "type": "object"
+    },
+    "ResetStep": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "reset",
+          "title": "Type",
+          "type": "string"
+        },
+        "method": {
+          "default": "pin",
+          "enum": [
+            "pin",
+            "probe"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "hold_ms": {
+          "default": 20,
+          "maximum": 5000,
+          "minimum": 0,
+          "title": "Hold Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "ResetStep",
+      "type": "object"
+    },
+    "SpiCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "spi",
+          "title": "Kind",
+          "type": "string"
+        },
+        "sck": {
+          "title": "Sck",
+          "type": "string"
+        },
+        "mosi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mosi"
+        },
+        "miso": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Miso"
+        },
+        "cs": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cs"
+        },
+        "mode": {
+          "default": 0,
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "title": "Mode",
+          "type": "integer"
+        },
+        "lsb_first": {
+          "default": false,
+          "title": "Lsb First",
+          "type": "boolean"
+        },
+        "expect": {
+          "description": "Transfers (one per CS frame) that must appear in order",
+          "items": {
+            "$ref": "#/$defs/SpiTransfer"
+          },
+          "minItems": 1,
+          "title": "Expect",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "sck",
+        "expect"
+      ],
+      "title": "SpiCheck",
+      "type": "object"
+    },
+    "SpiTransfer": {
+      "additionalProperties": false,
+      "properties": {
+        "mosi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hex bytes, e.g. '9f 00 00'",
+          "title": "Mosi"
+        },
+        "miso": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Miso"
+        }
+      },
+      "title": "SpiTransfer",
+      "type": "object"
+    },
+    "Square": {
+      "additionalProperties": false,
+      "properties": {
+        "hz": {
+          "exclusiveMinimum": 0,
+          "maximum": 25000000.0,
+          "title": "Hz",
+          "type": "number"
+        },
+        "duty_pct": {
+          "default": 50,
+          "exclusiveMaximum": 100,
+          "exclusiveMinimum": 0,
+          "title": "Duty Pct",
+          "type": "number"
+        }
+      },
+      "required": [
+        "hz"
+      ],
+      "title": "Square",
+      "type": "object"
+    },
+    "Target": {
+      "additionalProperties": false,
+      "properties": {
+        "board": {
+          "description": "Dev board model, e.g. 'NUCLEO-F411RE'",
+          "title": "Board",
+          "type": "string"
+        },
+        "mcu": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MCU part number, e.g. 'STM32F411RETx'",
+          "title": "Mcu"
+        }
+      },
+      "required": [
+        "board"
+      ],
+      "title": "Target",
+      "type": "object"
+    },
+    "UartCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "uart",
+          "title": "Kind",
+          "type": "string"
+        },
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "baud": {
+          "exclusiveMinimum": 0,
+          "title": "Baud",
+          "type": "integer"
+        },
+        "data_bits": {
+          "default": 8,
+          "enum": [
+            7,
+            8
+          ],
+          "title": "Data Bits",
+          "type": "integer"
+        },
+        "parity": {
+          "default": "none",
+          "enum": [
+            "none",
+            "even",
+            "odd"
+          ],
+          "title": "Parity",
+          "type": "string"
+        },
+        "stop_bits": {
+          "default": 1,
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Stop Bits",
+          "type": "integer"
+        },
+        "contains_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contains Text"
+        },
+        "contains_hex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contains Hex"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Regex on decoded text (latin-1)",
+          "title": "Pattern"
+        }
+      },
+      "required": [
+        "kind",
+        "signal",
+        "baud"
+      ],
+      "title": "UartCheck",
+      "type": "object"
+    },
+    "UartPeerDevice": {
+      "additionalProperties": false,
+      "description": "The rig acts as a UART device (e.g. modem, GPS): listens on the DUT's TX, talks to the DUT's RX.",
+      "properties": {
+        "kind": {
+          "const": "uart_peer",
+          "title": "Kind",
+          "type": "string"
+        },
+        "listen": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Signal = the DUT's TX pin",
+          "title": "Listen"
+        },
+        "talk": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Signal = the DUT's RX pin",
+          "title": "Talk"
+        },
+        "baud": {
+          "default": 115200,
+          "maximum": 3000000,
+          "minimum": 300,
+          "title": "Baud",
+          "type": "integer"
+        },
+        "echo": {
+          "default": false,
+          "title": "Echo",
+          "type": "boolean"
+        },
+        "replies": {
+          "items": {
+            "$ref": "#/$defs/UartReply"
+          },
+          "maxItems": 8,
+          "title": "Replies",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "UartPeerDevice",
+      "type": "object"
+    },
+    "UartReply": {
+      "additionalProperties": false,
+      "properties": {
+        "match": {
+          "description": "Text (or hex with match_is_hex) that triggers the reply when received",
+          "title": "Match",
+          "type": "string"
+        },
+        "reply": {
+          "description": "Text (or hex with reply_is_hex) sent back",
+          "title": "Reply",
+          "type": "string"
+        },
+        "match_is_hex": {
+          "default": false,
+          "title": "Match Is Hex",
+          "type": "boolean"
+        },
+        "reply_is_hex": {
+          "default": false,
+          "title": "Reply Is Hex",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "match",
+        "reply"
+      ],
+      "title": "UartReply",
+      "type": "object"
+    },
+    "WaitStep": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional name, shown in results",
+          "title": "Id"
+        },
+        "continue_on_fail": {
+          "default": false,
+          "description": "Keep running later steps if this one fails",
+          "title": "Continue On Fail",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "wait",
+          "title": "Type",
+          "type": "string"
+        },
+        "ms": {
+          "maximum": 600000,
+          "minimum": 0,
+          "title": "Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "ms"
+      ],
+      "title": "WaitStep",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "fp-testplan/0.1",
+      "default": "fp-testplan/0.1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "target": {
+      "$ref": "#/$defs/Target"
+    },
+    "images": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Image"
+      },
+      "minProperties": 1,
+      "title": "Images",
+      "type": "object"
+    },
+    "power": {
+      "$ref": "#/$defs/Power"
+    },
+    "signals": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "alias -> MCU pin name",
+      "title": "Signals",
+      "type": "object"
+    },
+    "timeout_s": {
+      "default": 120,
+      "exclusiveMinimum": 0,
+      "maximum": 600,
+      "title": "Timeout S",
+      "type": "number"
+    },
+    "steps": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "capture": "#/$defs/CaptureStep",
+            "console": "#/$defs/ConsoleStep",
+            "current": "#/$defs/CurrentStep",
+            "drive": "#/$defs/DriveStep",
+            "emulate": "#/$defs/EmulateStep",
+            "flash": "#/$defs/FlashStep",
+            "memory": "#/$defs/MemoryStep",
+            "power": "#/$defs/PowerStep",
+            "reset": "#/$defs/ResetStep",
+            "wait": "#/$defs/WaitStep"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/FlashStep"
+          },
+          {
+            "$ref": "#/$defs/ResetStep"
+          },
+          {
+            "$ref": "#/$defs/PowerStep"
+          },
+          {
+            "$ref": "#/$defs/WaitStep"
+          },
+          {
+            "$ref": "#/$defs/DriveStep"
+          },
+          {
+            "$ref": "#/$defs/ConsoleStep"
+          },
+          {
+            "$ref": "#/$defs/MemoryStep"
+          },
+          {
+            "$ref": "#/$defs/CurrentStep"
+          },
+          {
+            "$ref": "#/$defs/CaptureStep"
+          },
+          {
+            "$ref": "#/$defs/EmulateStep"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "name",
+    "target",
+    "images",
+    "steps"
+  ],
+  "title": "FP1001 test plan (fp-testplan/0.1)",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fp1001.dev/schema/fp-testplan-0.1.json"
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "fp-testplan/0.1",
+  "name": "blinky acceptance",
+  "description": "LED on PA5 blinks at 10 Hz, 50% duty; banner on the console.",
+  "target": {
+    "board": "NUCLEO-F411RE"
+  },
+  "images": {
+    "app": {
+      "file": "build/app.elf"
+    }
+  },
+  "signals": {
+    "LED": "PA5"
+  },
+  "timeout_s": 60,
+  "steps": [
+    {
+      "type": "flash",
+      "id": "flash"
+    },
+    {
+      "type": "console",
+      "id": "boot banner",
+      "pattern": "app ready",
+      "within_ms": 1000
+    },
+    {
+      "type": "capture",
+      "id": "blink",
+      "signals": [
+        "LED"
+      ],
+      "duration_ms": 500,
+      "checks": [
+        {
+          "kind": "frequency",
+          "signal": "LED",
+          "expect": {
+            "value": 10,
+            "tol_pct": 2
+          }
+        },
+        {
+          "kind": "duty",
+          "signal": "LED",
+          "expect": {
+            "value": 50,
+            "tol": 2
+          }
+        }
+      ]
+    }
+  ]
+}
